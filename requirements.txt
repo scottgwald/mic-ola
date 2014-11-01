@@ -1,0 +1,3 @@
+--allow-unverified pyaudio
+--allow-external pyaudio
+pyaudio
