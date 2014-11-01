@@ -16,10 +16,11 @@ my_threads = []
 
 wrapper = None
 loop_count = 0
-TICK_INTERVAL = 34  # in ms
+TICK_INTERVAL = 50  # in ms
 universe = 5
 nChannels = 18
 mic_intensity = 0
+hit_lock = False
 
 INITIAL_TAP_THRESHOLD = 50
 FORMAT = pyaudio.paInt16 
@@ -34,6 +35,11 @@ OVERSENSITIVE = 3.0/INPUT_BLOCK_TIME
 UNDERSENSITIVE = 5.0/INPUT_BLOCK_TIME 
 # if the noise was longer than this many blocks, it's not a 'tap'
 MAX_TAP_BLOCKS = 0.15/INPUT_BLOCK_TIME
+
+hit_threshold = 55
+hit_countdown_from = 10
+hit_countdown = 0
+HIT_MAX = 225
 
 def get_rms( block ):
     # RMS amplitude is defined as the square root of the 
@@ -102,6 +108,7 @@ class TapTester(object):
         print "Tap!"
 
     def listen(self):
+        global hit_countdown
         try:
             block = self.stream.read(INPUT_FRAMES_PER_BLOCK)
         except IOError, e:
@@ -120,6 +127,8 @@ class TapTester(object):
             for i in range(amplitude):
                 s+='*'
             print s
+            if hit_countdown == 0 and amplitude > hit_threshold:
+                hit_countdown = hit_countdown_from
             # noisy block
             self.quietcount = 0
             self.noisycount += 1
@@ -151,13 +160,17 @@ def DmxSent(state):
 def SendDMXFrame():
   global frame
   global loop_count
+  global hit_countdown
   # schdule a function call in 100ms
   # we do this first in case the frame computation takes a long time.
   wrapper.AddEvent(TICK_INTERVAL, SendDMXFrame)
   loop_count +=1
 
   frame[loop_count % nChannels] = ( 10 * loop_count ) % 96
-
+  if hit_countdown == hit_countdown_from:
+    hit_lights()
+  print "HIT COUNTDOWN: " + str(hit_countdown)
+  hit_countdown = max(0, hit_countdown - 1)
   # # compute frame here
   # data = array.array('B')
   # global loop_count
@@ -167,6 +180,19 @@ def SendDMXFrame():
 
   # send
   wrapper.Client().SendDmx(universe, frame, DmxSent)
+
+def hit_lights():
+  global frame
+  print("HITTING THE LIGHTS")
+  print("HITTING THE LIGHTS")
+  print("HITTING THE LIGHTS")
+  print("HITTING THE LIGHTS")
+  print("HITTING THE LIGHTS")
+  for i in range(nChannels):
+    frame[i] = HIT_MAX
+
+def drop_lights():
+  return
 
 def run_lights():
   global wrapper                                                                                                                        
