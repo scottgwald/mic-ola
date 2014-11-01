@@ -3,7 +3,7 @@ from ola.ClientWrapper import ClientWrapper
 
 wrapper = None
 loop_count = 0
-TICK_INTERVAL = 100  # in ms
+TICK_INTERVAL = 34  # in ms
 universe = 5
 nChannels = 18
 
@@ -11,7 +11,7 @@ def init_array():
   global frame
   frame = array.array('B')
   for i in range(nChannels):
-    frame.append(100)
+    frame.append(0)
 
 def DmxSent(state):
   if not state.Succeeded():
@@ -25,7 +25,7 @@ def SendDMXFrame():
   wrapper.AddEvent(TICK_INTERVAL, SendDMXFrame)
   loop_count +=1
 
-  frame[loop_count % nChannels] = ( 10 * loop_count ) % 255
+  frame[loop_count % nChannels] = ( 10 * loop_count ) % 96
 
   # # compute frame here
   # data = array.array('B')
